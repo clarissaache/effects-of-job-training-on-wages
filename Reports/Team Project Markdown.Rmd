@@ -8,6 +8,7 @@ output: pdf_document
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 wages = read.delim("../Data/lalondedata.txt", sep = ",")
+wages <- wages[,-c(1)]
 library("xtable")
 library("ggplot2")
 library("reshape2")
