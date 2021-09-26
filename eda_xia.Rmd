@@ -6,7 +6,7 @@ output: html_document
 ---
 load library
 ```{r}
-library(stargazer)
+library(stargazer)ge
 #library(tidyverse)
 library(ggplot2)
 library(arm)
@@ -14,7 +14,7 @@ library(pROC)
 library(caret)
 library(e1071)
 library(GGally)
-
+library(faraway)
 ```
 
 ```{r setup, include=FALSE}
@@ -32,8 +32,37 @@ wages$raceother <- wages$black==0 &wages$hispan==0
 wages$raceother <- ifelse(wages$raceother,1,0)
 wages$raceother_fac <-factor(wages$raceother,levels=c(0,1),labels=c("Black or Hispanic","Other race"))
 
+wages$race <-0
+wages$race[wages$black==1] <-1
+wages$race[wages$hispan==1] <-2
+wages$race <- factor(wages$race,levels=c(0,1,2),labels = c("other race","Black","Hispanic"))
+
 wages$age_c <- wages$age-mean(wages$age)
+wages$differ7874 <- wages$re78-wages$re74
+wages$differ7875 <- wages$re78-wages$re75
+wages$differ7574 <- wages$re75-wages$re74
 ## total 614, black 243, hispanic 72, other race 299
+
+## makes education as a categorical variable
+wages$educ_fac <- factor(wages$educ,levels=c(0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18))
+```
+
+```{r}
+sum(wages$married)
+sum(wages$treat)
+nrow(wages[(wages$married==1 & wages$treat==0),])
+nrow(wages[(wages$married==0 & wages$treat==0),])
+
+nrow(wages[(wages$married==1 & wages$treat==1),])
+nrow(wages[(wages$married==0 & wages$treat==1),])
+
+table(wages[,c("married","treat")])
+```
+
+```{r}
+summary(wages$differ7874)
+summary(wages$differ7875)
+summary(wages$differ7574)
 ```
 
 #PART 
@@ -50,75 +79,208 @@ hist(wages$logre78,xlab="wage in 1978 (oz)",main="Distribution of log wage in 19
 
 ```{r}
 # categorical variable: training
-ggplot(wages, aes(x=treat_fac,y=re78, fill=re78))+
+ggplot(wages, aes(x=treat_fac,y=differ7874, fill=re78))+
   geom_boxplot()+
   scale_fill_brewer(palette = "Reds")+
   labs(title="wage in 1978 vs training",
-       x="Training ", y="wage in 78")
+       x="Training ", y="wage in 78")+
+  scale_y_continuous(breaks = round(seq(min(wages$differ7874), max(wages$differ7874), by = 3000),1))
 
 # categorical variable: raceBlack
-ggplot(wages, aes(x=black_fac,y=re78, fill=re78))+
+ggplot(wages, aes(x=black_fac,y=differ7874, fill=re78))+
   geom_boxplot()+
   scale_fill_brewer(palette = "Reds")+
   labs(title="wage in 1978 vs Black",
        x="Black", y="wage in 78")
 
 # categorical variable: raceHispanic
-ggplot(wages, aes(x=hispan_fac,y=re78, fill=re78))+
+ggplot(wages, aes(x=hispan_fac,y=differ7874, fill=re78))+
   geom_boxplot()+
   scale_fill_brewer(palette = "Reds")+
   labs(title="wage in 1978 vs Hispanic",
        x="Hispanic", y="wage in 78")
 
-ggplot(wages, aes(x=raceother_fac,y=re78, fill=re78))+
+ggplot(wages, aes(x=race,y=differ7874, fill=re78))+
   geom_boxplot()+
   scale_fill_brewer(palette = "Reds")+
   labs(title="wage in 1978 vs other races",
        x="other races", y="wage in 78")
 
-ggplot(wages, aes(x=married_fac,y=re78, fill=re78))+
+ggplot(wages, aes(x=married_fac,y=differ7874, fill=re78))+
   geom_boxplot()+
   scale_fill_brewer(palette = "Reds")+
   labs(title="wage in 1978 vs Married",
        x="married", y="wage in 78")
 
-ggplot(wages, aes(x=nodegree_fac,y=re78, fill=re78))+
+ggplot(wages, aes(x=nodegree_fac,y=differ7874, fill=re78))+
   geom_boxplot()+
   scale_fill_brewer(palette = "Reds")+
   labs(title="wage in 1978 vs with high school degree",
-       x="high school degree", y="wage in 78")
+       x="high school degree", y="wage in 78")+
+  scale_y_continuous(breaks = round(seq(min(wages$differ7874), max(wages$differ7874), by = 3000),1))
 
 ```
 ```{r} 
 # interaction between categorical variables
+ggplot(wages, aes(x=treat_fac,y=differ7874, fill=re78))+
+  geom_boxplot()+
+  scale_fill_brewer(palette = "Reds")+
+  labs(title="wage 1978-1974 VS treatment By Black?",
+       x="Training ", y="wage 1978-1974")+facet_wrap(~black_fac)
+  scale_y_continuous(breaks = round(seq(min(wages$differ7874), max(wages$differ7874), by = 3000),1))
+  
+ggplot(wages, aes(x=treat_fac,y=differ7874, fill=re78))+
+geom_boxplot()+
+scale_fill_brewer(palette = "Reds")+
+labs(title="wage 1978-1974 VS treatment By Hispanic?",
+     x="Training ", y="wage 1978-1974")+facet_wrap(~hispan_fac)
+scale_y_continuous(breaks = round(seq(min(wages$differ7874), max(wages$differ7874), by = 3000),1))
+
+ggplot(wages, aes(x=treat_fac,y=differ7874, fill=re78))+
+geom_boxplot()+
+scale_fill_brewer(palette = "Reds")+
+labs(title="wage 1978-1974 VS treatment By Married?",
+     x="Training ", y="wage 1978-1974")+facet_wrap(~married_fac)
+scale_y_continuous(breaks = round(seq(min(wages$differ7874), max(wages$differ7874), by = 3000),1))
+
+
+ggplot(wages, aes(x=treat_fac,y=differ7874, fill=re78))+
+geom_boxplot()+
+scale_fill_brewer(palette = "Reds")+
+labs(title="wage 1978-1974 VS treatment By nodegree?",
+     x="Training ", y="wage 1978-1974")+facet_wrap(~nodegree_fac)
+scale_y_continuous(breaks = round(seq(min(wages$differ7874), max(wages$differ7874), by = 3000),1))
+
+
 
 ```
 ```{r}
 # numerical variable: age
-ggplot(wages,aes(x=age_c,y=logre78))+ geom_point()+geom_smooth(method="lm",col="red3")+labs(title="wage78 VS age centered",y="wage78",x="age")
+ggplot(wages,aes(x=age_c,y=differ7874))+ geom_point()+geom_smooth(method="lm",col="red3")+labs(title="wage78 VS age centered",y="wage78-74",x="age")
 
-ggplot(wages,aes(x=age_c,y=logre78))+ geom_point()+geom_smooth(method="lm",col="red3")+labs(title="wage78 VS age centered by treatment",y="log(wage78)",x="age centered") +facet_wrap(~treat_fac)
+ggplot(wages,aes(x=age_c,y=differ7874))+ geom_point()+geom_smooth(method="lm",col="red3")+labs(title="wage78 VS age centered by treatment",y="lwage78-74",x="age centered") +facet_wrap(~treat_fac)
 
 # numerical variable: education year
-ggplot(wages,aes(x=educ,y=logre78))+ geom_point()+geom_smooth(method="lm",col="red3")+labs(title="wage78 VS education years",y="wage78",x="educaiton year")
+ggplot(wages,aes(x=educ,y=differ7874))+ geom_point()+geom_smooth(method="lm",col="red3")+labs(title="wage78 VS education years",y="wage78",x="educaiton year")
 
-ggplot(wages,aes(x=educ,y=logre78))+ geom_point()+geom_smooth(method="lm",col="red3")+labs(title="wage78 VS education years by training",y="log(wage78)",x="education year") +facet_wrap(~treat_fac)
+ggplot(wages,aes(x=educ,y=differ7874))+ geom_point()+geom_smooth(method="lm",col="red3")+labs(title="wage78 VS education years by training",y="log(wage78)",x="education year") +facet_wrap(~treat_fac)
+
+ggplot(wages,aes(x=age_c,y=differ7874))+ geom_point()+geom_smooth(method="lm",col="red3")+labs(title="wage78 VS age centered by black?",y="wage78-74",x="age centered") +facet_wrap(~black_fac)
+
+ggplot(wages,aes(x=age_c,y=differ7874))+ geom_point()+geom_smooth(method="lm",col="red3")+labs(title="wage78 VS age centered by hispanic?",y="wage78-74",x="age centered") +facet_wrap(~hispan_fac)
+
+ggplot(wages,aes(x=educ,y=differ7874))+ geom_point()+geom_smooth(method="lm",col="red3")+labs(title="wage78 VS educ black?",y="wage78-74",x="education year") +facet_wrap(~black_fac)
+
+ggplot(wages,aes(x=educ,y=differ7874))+ geom_point()+geom_smooth(method="lm",col="red3")+labs(title="wage78 VS educ hispanic?",y="wage78-74",x="education year") +facet_wrap(~hispan_fac)
 
 
-# numerical variable: re74
-ggplot(wages,aes(x=re74,y=logre78))+ geom_point()+geom_smooth(method="lm",col="red3")+labs(title="wage78 VS wage74",y="log(wage78)",x="wage74")
+ggplot(wages,aes(x=age_c,y=differ7874))+ geom_point()+geom_smooth(method="lm",col="red3")+labs(title="wage78 VS age centered by married?",y="wage78-74",x="age centered") +facet_wrap(~married_fac)
 
-ggplot(wages,aes(x=re74,y=logre78))+ geom_point()+geom_smooth(method="lm",col="red3")+labs(title="wage78 VS wage74 by training",y="log(wage78)",x="wage74") +facet_wrap(~treat_fac)
+ggplot(wages,aes(x=educ,y=differ7874))+ geom_point()+geom_smooth(method="lm",col="red3")+labs(title="wage78 VS education year by married?",y="wage78-74",x="education year") +facet_wrap(~married_fac)
 
-# numerical variable: re75
-ggplot(wages,aes(x=re75,y=logre78))+ geom_point()+geom_smooth(method="lm",col="red3")+labs(title="wage78 VS wage74",y="log(wage78)",x="wage75")
-
-ggplot(wages,aes(x=re75,y=logre78))+ geom_point()+geom_smooth(method="lm",col="red3")+labs(title="wage78 VS wage75 by training",y="log(wage78)",x="wage75") +facet_wrap(~treat_fac)
+# # numerical variable: re74
+# ggplot(wages,aes(x=re74,y=logre78))+ geom_point()+geom_smooth(method="lm",col="red3")+labs(title="wage78 VS wage74",y="log(wage78)",x="wage74")
+# 
+# ggplot(wages,aes(x=re74,y=logre78))+ geom_point()+geom_smooth(method="lm",col="red3")+labs(title="wage78 VS wage74 by training",y="log(wage78)",x="wage74") +facet_wrap(~treat_fac)
+# 
+# # numerical variable: re75
+# ggplot(wages,aes(x=re75,y=logre78))+ geom_point()+geom_smooth(method="lm",col="red3")+labs(title="wage78 VS wage74",y="log(wage78)",x="wage75")
+# 
+# ggplot(wages,aes(x=re75,y=logre78))+ geom_point()+geom_smooth(method="lm",col="red3")+labs(title="wage78 VS wage75 by training",y="log(wage78)",x="wage75") +facet_wrap(~treat_fac)
 
 ```
+# Part I fit model
+
+```{r}
+model0 <- lm(differ7874~age_c+educ+married_fac+treat_fac+black_fac+hispan_fac+nodegree_fac,data=wages)
+summary(model0)
+plot(model0)
+plot(model0,which=4)
+ggplot(wages,aes(x=age_c, y=model0$residual)) +
+geom_point(alpha = .7) + geom_hline(yintercept=0,col="red3") + theme_classic() +
+labs(title="Residuals vs age_c",x="age_c",y="Residuals")
 
 
+ggplot(wages,aes(x=educ, y=model0$residual)) +
+geom_point(alpha = .7) + geom_hline(yintercept=0,col="red3") + theme_classic() +
+labs(title="Residuals vs education year",x="educ year",y="Residuals")
 
+
+n <- nrow(model.matrix(model0)); p <- ncol(model.matrix(model0)); 2*p/n
+lev_scores <- hatvalues(model0) #can also use influence(regwagecsquares)$hat
+plot(lev_scores,col=ifelse(lev_scores > (2*p/n), 'red2', 'navy'),type="h",
+     ylab="Leverage score",xlab="Index",main="Leverage Scores for all observations")
+text(x=c(1:n)[lev_scores > (2*p/n)]+c(rep(2,4),-2,2),y=lev_scores[lev_scores > (2*p/n)],labels=c(1:n)[lev_scores > (2*p/n)])
+```
+```{r}
+# wages[c(32,44,129),]
+
+# add interaction terms, and step wise selection
+nullModel <- lm(differ7874~treat_fac,data= wages)
+fullModel <- lm(differ7874~age_c*educ*married_fac*treat_fac*black_fac*hispan_fac*nodegree_fac,data=wages)
+stepwise <- step(nullModel,scope = formula(fullModel),direction="both",trace=0)#,k=log(n))
+stepwise$call
+model1 <- lm(formula = differ7874 ~ treat_fac + age_c + married_fac + treat_fac:age_c + 
+    age_c:married_fac, data = wages)
+summary(model1)
+confint(model1)
+
+plot(model1)
+
+ggplot(wages,aes(x=age_c, y=model1$residual)) +
+geom_point(alpha = .7) + geom_hline(yintercept=0,col="red3") + theme_classic() +
+labs(title="Residuals vs age_c",x="age_c",y="Residuals")
+
+ggplot(wages,aes(x=educ, y=model1$residual)) +
+geom_point(alpha = .7) + geom_hline(yintercept=0,col="red3") + theme_classic() +
+labs(title="Residuals vs age_c",x="age_c",y="Residuals")
+
+vif(model1)
+
+### For an individual who received straining, on average, the difference between your wage in 1978 and 1974 is 2572.97 higher than someone who has similar values for all other variables but did not receive treatment
+### For married people, on average, the difference between their wage in 1978 and 1974 is 1833.72 lower than someone who has similar values for all other variables but was not married
+### with every increase in age, the difference between wage in 1978 and 1974 decreases by $201 while keeping other variables the same.
+
+
+#age: married: 129.44
+### if married, age 1 year -201+129.44 = 70.66
+### if not married, age 1 year: -201
+
+# for married people, with each additional year in age, the difference between their wage in 1978 and 1974 will have an increase of 129 dollars. 
+
+# treat_facTreated:age_c: 294.99     
+# if treated, age 1 year -201+294.99 = 93.99
+# if not treated, age 1 year: -201
+
+```
+```{r} 
+# add race
+# check if black? and black?:treat
+model2 <- lm(formula = differ7874 ~ treat_fac + age_c + married_fac + treat_fac:age_c + 
+    age_c:married_fac+black_fac+black_fac:treat_fac, data = wages)
+anova(model1,model2)
+
+## hispanic and hispanic:treatment
+model3 <- lm(formula = differ7874 ~ treat_fac + age_c + married_fac + treat_fac:age_c + 
+    age_c:married_fac+hispan_fac+hispan_fac:treat_fac, data = wages)
+anova(model1,model3)
+
+## just black
+model4 <- lm(formula = differ7874 ~ treat_fac + age_c + married_fac + treat_fac:age_c + 
+    age_c:married_fac+black_fac, data = wages)
+anova(model1,model4)
+
+## just nodegree
+model5 <- lm(formula = differ7874 ~ treat_fac + age_c + married_fac + treat_fac:age_c + 
+    age_c:married_fac+nodegree_fac, data = wages)
+anova(model1,model5)
+
+# summary(model1)
+# plot(model1)
+
+#no interaction is interesting
+
+```
 ### part 2
 ```{r}
 countBYtraining <- table(wages[,c("nonZero78_fac","treat_fac")])
@@ -166,17 +328,167 @@ chisq.test(countBYmarried)
 
 ```{r}
 #numerical variable
-binnedplot(y=wages$nonZero78,x=wages$age_c,xlab="age centered",ylab="zero wage 78",ylim=c(0,1),main = "zero wage 78 vs age centered")
 
+ggplot(wages, aes(x=nonZero78_fac,y=age, fill=nonZero78_fac))+
+  geom_boxplot()+coord_flip()+
+  scale_fill_brewer(palette = "Reds")+
+  labs(title="age vs nonzero78",
+       x="nonzero78", y="age")
+
+ggplot(wages, aes(x=nonZero78_fac,y=educ, fill=nonZero78_fac))+
+  geom_boxplot()+coord_flip()+
+  scale_fill_brewer(palette = "Reds")+
+  labs(title="age vs nonzero78",
+       x="nonzero78", y="educ")
+
+
+ggplot(wages, aes(x=nonZero78_fac,y=re74, fill=nonZero78_fac))+
+  geom_boxplot()+coord_flip()+
+  scale_fill_brewer(palette = "Reds")+
+  labs(title="re74 vs nonzero78",
+       x="nonzero78", y="re74")
+
+
+binnedplot(y=wages$nonZero78,x=wages$age,xlab="age",ylab="zero wage 78",ylim=c(0,1),main = "zero wage 78 vs age")
+binnedplot(y=wages$nonZero78,x=wages$age_c,xlab="age_c",ylab="zero wage 78",ylim=c(0,1),main = "zero wage 78 vs age centered")
 binnedplot(y=wages$nonZero78,x=wages$educ,xlab="education year",ylab="zero wage 78",ylim=c(0,1),main = "zero wage 78 vs education year")
+binnedplot(y=wages$nonZero78,x=wages$re74,xlab="re74",ylab="zero wage 78",ylim=c(0,1),main = "zero wage 78 vs re74")
 
-binnedplot(y=wages$nonZero78,x=wages$re74,xlab="wage 74",ylab="zero wage 78",ylim=c(0,1),main = "zero wage 78 vs wage in 74")
+sum(wages$age>40)
+sum(wages$age>50)
+```
 
-binnedplot(y=wages$nonZero78,x=wages$re75,xlab="wage 75",ylab="zero wage 78",ylim=c(0,1),main = "zero wage 78 vs wage in 75")
+```{r}
+#age:categorical
 
+ggplot(wages, aes(x=nonZero78_fac,y=age, fill=nonZero78_fac))+
+  geom_boxplot()+coord_flip()+
+  scale_fill_brewer(palette = "Reds")+
+  labs(title="age vs nonzero78",
+       x="nonzero78", y="age")+facet_wrap(~treat_fac)
+
+ggplot(wages, aes(x=nonZero78_fac,y=age, fill=nonZero78_fac))+
+  geom_boxplot()+coord_flip()+
+  scale_fill_brewer(palette = "Reds")+
+  labs(title="age vs nonzero78",
+       x="nonzero78", y="age")+facet_wrap(~married_fac)
+
+
+ggplot(wages, aes(x=nonZero78_fac,y=age, fill=nonZero78_fac))+
+  geom_boxplot()+coord_flip()+
+  scale_fill_brewer(palette = "Reds")+
+  labs(title="age vs nonzero78",
+       x="nonzero78", y="age")+facet_wrap(~black_fac)
+
+ggplot(wages, aes(x=nonZero78_fac,y=age, fill=nonZero78_fac))+
+  geom_boxplot()+coord_flip()+
+  scale_fill_brewer(palette = "Reds")+
+  labs(title="age vs nonzero78",
+       x="nonzero78", y="age")+facet_wrap(~hispan_fac)
+```
+
+
+```{r}
+#age:categorical
+
+ggplot(wages, aes(x=nonZero78_fac,y=educ, fill=nonZero78_fac))+
+  geom_boxplot()+coord_flip()+
+  scale_fill_brewer(palette = "Reds")+
+  labs(title="educ vs nonzero78",
+       x="nonzero78", y="educ")+facet_wrap(~treat_fac)
+
+ggplot(wages, aes(x=nonZero78_fac,y=educ, fill=nonZero78_fac))+
+  geom_boxplot()+coord_flip()+
+  scale_fill_brewer(palette = "Reds")+
+  labs(title="educ vs nonzero78",
+       x="nonzero78", y="educ")+facet_wrap(~married_fac)
+
+
+ggplot(wages, aes(x=nonZero78_fac,y=educ, fill=nonZero78_fac))+
+  geom_boxplot()+coord_flip()+
+  scale_fill_brewer(palette = "Reds")+
+  labs(title="educ vs nonzero78",
+       x="nonzero78", y="educ")+facet_wrap(~black_fac)
+
+ggplot(wages, aes(x=nonZero78_fac,y=educ, fill=nonZero78_fac))+
+  geom_boxplot()+coord_flip()+
+  scale_fill_brewer(palette = "Reds")+
+  labs(title="educ vs nonzero78",
+       x="nonzero78", y="educ")+facet_wrap(~hispan_fac)
 ```
 
 ```{r}
 
+par(mfcol=c(2,1))
+binnedplot(y=wages$nonZero78[wages$treat==0],x=wages$age[wages$treat==0],xlab="age",ylab="nonZero",ylim=c(0,1),main = "Binned age vs Nonzero78 Not treated")
+binnedplot(y=wages$nonZero78[wages$treat==1],x=wages$age[wages$treat==1],xlab="age",ylab="nonZero",ylim=c(0,1),main = "Binned age vs Nonzero78")
 
+
+par(mfcol=c(2,1))
+binnedplot(y=wages$nonZero78[wages$treat==0],x=wages$educ[wages$treat==0],xlab="education years",ylab="nonZero",ylim=c(0,1),main = "Binned education year vs Nonzero78 Not treated")
+binnedplot(y=wages$nonZero78[wages$treat==1],x=wages$educ[wages$treat==1],xlab="edcation years",ylab="nonZero",ylim=c(0,1),main = "Binned education year vs Nonzero78")
+
+par(mfcol=c(2,1))
+binnedplot(y=wages$nonZero78[wages$treat==0],x=wages$re74[wages$treat==0],xlab="education years",ylab="nonZero",ylim=c(0,1),main = "Binned re74 vs Nonzero78 Not treated")
+binnedplot(y=wages$nonZero78[wages$treat==1],x=wages$re74[wages$treat==1],xlab="edcation years",ylab="nonZero",ylim=c(0,1),main = "Binned re74 vs Nonzero78")
+
+
+par(mfcol=c(2,1))
+binnedplot(y=wages$nonZero78[wages$nodegree==0],x=wages$educ[wages$nodegree==0],xlab="education years",ylab="nonZero",ylim=c(0,1),main = "Binned education year vs Nonzero78 nodegree")
+binnedplot(y=wages$nonZero78[wages$nodegree==1],x=wages$educ[wages$nodegree==1],xlab="edcation years",ylab="nonZero",ylim=c(0,1),main = "Binned education year vs Nonzero78")
+
+```
+
+
+
+```{r}
+wages$re74_c <-wages$re74 -mean(wages$re74)
+model0 <- glm(nonZero78_fac~age_c+educ+treat_fac+black_fac+hispan_fac+nodegree_fac+re74,family=binomial,data=wages)
+summary(model0)
+exp(confint.default(model0))-1
+# exp(model0$coefficients)[c('mraceblack','mraceasian')]
+
+```
+
+
+```{r}
+nullModel <- glm(nonZero78_fac~treat_fac,family=binomial,data=wages)
+fullModel <- glm(nonZero78_fac~age_c+educ+married_fac+treat_fac+black_fac+hispan_fac+nodegree_fac+
+                   re74_c+age_c:treat_fac+
+                   educ:treat_fac+
+                   black_fac:treat_fac+
+                   hispan_fac:treat_fac+
+                   re74_c:treat_fac+
+                   married_fac:treat_fac+
+                   married_fac:age_c+
+                   married_fac:educ+
+                   married_fac:re74_c+
+                   nodegree_fac:treat_fac,family=binomial,data=wages)
+stepwise2 <- step(nullModel,scope = formula(fullModel),direction="both",trace=0)#,k=log(n))
+stepwise2$call
+glmmodel1 <- glm(formula = nonZero78_fac ~ treat_fac + age_c + re74_c + black_fac + 
+    treat_fac:age_c + treat_fac:black_fac + treat_fac:re74_c, 
+    family = binomial, data = wages)
+summary(stepwise2)
+```
+
+```{r}
+# par(mfcol=c(2,1),mai = c(0.8, 0.9, 0.3,0.3))
+binnedplot(fitted(glmmodel1),residuals(glmmodel1,"resp"),xlab="Pred. probabilities",ylab="Avg. residuals",main="Binned residual plot",col.pts="navy")
+binnedplot(x=wages$age_c,residuals(glmmodel1,"resp"),xlab="age_c",ylab="Avg. residuals",main="Binned residual plot",col.pts="navy")
+
+binnedplot(x=wages$educ,residuals(glmmodel1,"resp"),xlab="educ",ylab="Avg. residuals",main="Binned residual plot",col.pts="navy")
+
+binnedplot(x=wages$re74_c,residuals(glmmodel1,"resp"),xlab="re74_c",ylab="Avg. residuals",main="Binned residual plot",col.pts="navy")
+
+# seems like there are some trends on the age_c VS residuals, educ VS residuals
+```
+```{r}
+Conf_mat <- confusionMatrix(as.factor(ifelse(fitted(glmmodel1) >= mean(wages$nonZero78), "1","0")),as.factor(wages$nonZero78),positive = "1")      
+Conf_mat$table
+Conf_mat$overall["Accuracy"];
+Conf_mat$byClass[c("Sensitivity","Specificity")] 
+
+roc(wages$nonZero78,fitted(glmmodel1),plot=T,print.thres="best",legacy.axes=T,
+    print.auc =T,col="red3")
 ```
