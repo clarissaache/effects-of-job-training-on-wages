@@ -243,8 +243,8 @@ vif(model1)
 
 
 #age: married: 129.44
-### if married, age 1 year -201+129.44 = 70.66
-### if not married, age 1 year: -201
+### if married, age increases 1 year -201+129.44 = 70.66
+### if not married, age increases 1 year: -201
 
 # for married people, with each additional year in age, the difference between their wage in 1978 and 1974 will have an increase of 129 dollars. 
 
