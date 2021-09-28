@@ -6,7 +6,7 @@ output: html_document
 ---
 load library
 ```{r}
-library(stargazer)ge
+library(stargazer)
 #library(tidyverse)
 library(ggplot2)
 library(arm)
@@ -69,7 +69,7 @@ summary(wages$differ7574)
 #I Is there evidence that workers who receive job training tend to earn higher wages than workers who do not receive job training?
 #Linear regression
 ```{r}
-# distribution of the reponse variable
+# distribution of the response variable
 
 hist(wages$re78,xlab="wage in 1978 (oz)",main="Distribution of wage in 1978",col=rainbow(10))
 #not normal, take log
@@ -82,9 +82,10 @@ hist(wages$logre78,xlab="wage in 1978 (oz)",main="Distribution of log wage in 19
 ggplot(wages, aes(x=treat_fac,y=differ7874, fill=re78))+
   geom_boxplot()+
   scale_fill_brewer(palette = "Reds")+
-  labs(title="wage in 1978 vs training",
-       x="Training ", y="wage in 78")+
+  labs(title="Wage Difference 78-74 vs Training",
+       x="Training (1=trained, 0=untrained)", y="Wage Difference 78-74 in $")+
   scale_y_continuous(breaks = round(seq(min(wages$differ7874), max(wages$differ7874), by = 3000),1))
+
 
 # categorical variable: raceBlack
 ggplot(wages, aes(x=black_fac,y=differ7874, fill=re78))+
@@ -156,9 +157,9 @@ scale_y_continuous(breaks = round(seq(min(wages$differ7874), max(wages$differ787
 ```
 ```{r}
 # numerical variable: age
-ggplot(wages,aes(x=age_c,y=differ7874))+ geom_point()+geom_smooth(method="lm",col="red3")+labs(title="wage78 VS age centered",y="wage78-74",x="age")
+ggplot(wages,aes(x=age_c,y=differ7874))+ geom_point()+geom_smooth(method="lm",col="red3")+labs(title="Wage Difference78-74 VS Age centered",y="Wage78-74 in $",x="Age in years, centered")
 
-ggplot(wages,aes(x=age_c,y=differ7874))+ geom_point()+geom_smooth(method="lm",col="red3")+labs(title="wage78 VS age centered by treatment",y="lwage78-74",x="age centered") +facet_wrap(~treat_fac)
+ggplot(wages,aes(x=age_c,y=differ7874))+ geom_point()+geom_smooth(method="lm",col="red3")+labs(title="Wage Difference78-74 VS Age centered by Treatment",y="Wage78-74 in $",x="Age in years, centered") +facet_wrap(~treat_fac)
 
 # numerical variable: education year
 ggplot(wages,aes(x=educ,y=differ7874))+ geom_point()+geom_smooth(method="lm",col="red3")+labs(title="wage78 VS education years",y="wage78",x="educaiton year")
