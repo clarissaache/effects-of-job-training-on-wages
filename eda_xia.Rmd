@@ -466,13 +466,11 @@ fullModel <- glm(nonZero78_fac~age_c+educ+married_fac+treat_fac+black_fac+hispan
                    nodegree_fac:treat_fac,family=binomial,data=wages)
 stepwise2 <- step(nullModel,scope = formula(fullModel),direction="both",trace=0)#,k=log(n))
 stepwise2$call
-glmmodel1 <- glm(formula = nonZero78_fac ~ treat_fac + age_c + re74_c + black_fac + 
-    treat_fac:age_c + treat_fac:black_fac + treat_fac:re74_c, 
-    family = binomial, data = wages)
 summary(stepwise2)
 ```
 
 ```{r}
+glmmodel1 <- glm(formula = nonZero78_fac ~ treat_fac + age_c + re74_c + black_fac + treat_fac:age_c + treat_fac:black_fac + treat_fac:re74_c, family = binomial, data = wages)
 # par(mfcol=c(2,1),mai = c(0.8, 0.9, 0.3,0.3))
 binnedplot(fitted(glmmodel1),residuals(glmmodel1,"resp"),xlab="Pred. probabilities",ylab="Avg. residuals",main="Binned residual plot",col.pts="navy")
 binnedplot(x=wages$age_c,residuals(glmmodel1,"resp"),xlab="age_c",ylab="Avg. residuals",main="Binned residual plot",col.pts="navy")
@@ -491,4 +489,16 @@ Conf_mat$byClass[c("Sensitivity","Specificity")]
 
 roc(wages$nonZero78,fitted(glmmodel1),plot=T,print.thres="best",legacy.axes=T,
     print.auc =T,col="red3")
+```
+```{r}
+#add polynomial term to age
+wages$age_c2 <- wages
+glmmodel1 <- glm(formula = nonZero78_fac ~ treat_fac + age_c + re74_c + black_fac + treat_fac:age_c + treat_fac:black_fac + treat_fac:re74_c, family = binomial, data = wages)
+
+```
+
+
+```{r}
+hist(wages$re74)
+hist(wages$re78)
 ```
