@@ -10,7 +10,6 @@ library("rms")
 library(plyr)
 library(patchwork) # To display 2 charts together
 library(hrbrthemes)
-library(gganimate) 
 #############Part I#################
 wages <- read.table("./Data//lalondedata.txt",sep=",",header=TRUE)
 summary(wages)
