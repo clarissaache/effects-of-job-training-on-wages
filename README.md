@@ -9,3 +9,5 @@ Data for this analysis includes:
 * The control group (those who did not receive the training) includes all the unemployed males in 1976 whose income in 1975 was below the poverty level. Not obtained as part of the NSW experiment.
 
 This analysis uses a *multiple linear regression* model to determine if there is evidence that workers who receive job training tend to earn higher wages than workers who do not receive job training.
+
+Full report [here](Effect of job training on wages report.pdf)
